@@ -9,7 +9,6 @@
 using namespace std;
 
 class ObjectDetector{
-
 public:
     ObjectDetector(vector<cv::Mat>& imageSet, double threshold, unsigned int clusterSize, const cv::Mat& mask);
     ObjectDetector(double threshold, unsigned int clusterSize, const cv::Mat& mask);

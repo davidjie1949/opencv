@@ -41,9 +41,9 @@ ObjectDetector::ObjectDetector(vector<cv::Mat>& imageSet, double threshold, unsi
         cv::resize(mask.clone(), this->m_mask, cv::Size(), this->m_scale, this->m_scale);
         cv::cvtColor(this->m_mask, this->m_mask, cv::COLOR_BGR2GRAY);
         this->m_epsilon = 8;
+        this->dbscan = new DBSCAN(this->m_epsilon, this->m_clusterSize);
         this->m_rh = this->m_mask.size[0];
         this->m_rw = this->m_mask.size[1];
-        this->dbscan = new DBSCAN(this->m_epsilon, this->m_clusterSize);
         this->m_horizontal = 0;
         this->m_vertical = 0;
         GetDesktopResolution(this->m_horizontal, this->m_vertical);
@@ -59,17 +59,21 @@ ObjectDetector::ObjectDetector(double threshold, unsigned int clusterSize, const
     cv::resize(mask.clone(), this->m_mask, cv::Size(), this->m_scale, this->m_scale);
     cv::cvtColor(this->m_mask, this->m_mask, cv::COLOR_BGR2GRAY);
     this->m_epsilon = 8;
+    this->dbscan = new DBSCAN(this->m_epsilon, this->m_clusterSize);
     this->m_rh = this->m_mask.size[0];
     this->m_rw = this->m_mask.size[1];
-    this->dbscan = new DBSCAN(this->m_epsilon, this->m_clusterSize);
     GetDesktopResolution(this->m_horizontal, this->m_vertical);
 
-    menu         = cv::imread("images/menu.png", cv::IMREAD_UNCHANGED);
-    tBaseline    = cv::imread("images/baseline.png", cv::IMREAD_UNCHANGED);
-    tSD          = cv::imread("images/sd.png", cv::IMREAD_UNCHANGED);
-    tSubtracted  = cv::imread("images/subtracted.png", cv::IMREAD_UNCHANGED);
-    tMasked      = cv::imread("images/masked.png", cv::IMREAD_UNCHANGED);
+    menu         = cv::imread("images/menu.png",        cv::IMREAD_UNCHANGED);
+    tBaseline    = cv::imread("images/baseline.png",    cv::IMREAD_UNCHANGED);
+    tSD          = cv::imread("images/sd.png",          cv::IMREAD_UNCHANGED);
+    tSubtracted  = cv::imread("images/subtracted.png",  cv::IMREAD_UNCHANGED);
+    tMasked      = cv::imread("images/masked.png",      cv::IMREAD_UNCHANGED);
     tThresholded = cv::imread("images/thresholded.png", cv::IMREAD_UNCHANGED);
+}
+
+ObjectDetector::~ObjectDetector(){
+    cout << "ObjectDetector is released" << endl;
 }
 
 double ObjectDetector::getThreshold(){
@@ -131,8 +135,6 @@ cv::Mat makeTitleBar(int title, cv::Mat image){
     cv::Mat newImage = image.clone();
     cv::Mat titleBlend;
     cv::Mat roi(newImage, cv::Rect(0, 0, image.size[1], BB_OFFSET * 4));
- cout << titleImage.size() << endl;
- cout << roi.size << endl;
     addWeighted(titleImage, 0.5, roi, 0.5, 0.0, titleBlend);
     titleBlend.copyTo(roi);
     cv::Rect r = cv::Rect(0, 0, DOWNSAMPLED_WIDTH, DOWNSAMPLED_HEIGHT);
@@ -142,10 +144,12 @@ cv::Mat makeTitleBar(int title, cv::Mat image){
 
 vector<cv::Rect> ObjectDetector::evaluate(cv::Mat& image, cv::Mat& output){
     vector<cv::Rect> BB;
+    cout << this->imageSet.size() << endl;
     if(this->imageSet.size() == 0){
+        cout << "check in 2" << endl;
         cv::Mat outputScreen(FINAL_HEIGHT, FINAL_WIDTH, CV_8UC3, cv::Scalar(0, 0, 0));
         cv::Mat rsim;
-        cv::resize(image, rsim, cv::Size(FINAL_WIDTH, FINAL_HEIGHT), 0, 0);
+        cv::resize(image, rsim, cv::Size(FINAL_WIDTH, FINAL_HEIGHT));
         cv::Mat roi(outputScreen, cv::Rect(0, 0, rsim.cols, rsim.rows));
         rsim.copyTo(roi);
         output = outputScreen;
